@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 47 96% 53%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 47 96% 53%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  html {
+    overflow: hidden;
+    height: 100%;
+    /* Prevent mobile browser address bar issues */
+    height: 100vh;
+    height: 100dvh; /* Use dynamic viewport height on supported browsers */
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-inter);
+    overflow: hidden;
+    height: 100%;
+    position: fixed;
+    width: 100%;
+    /* Prevent mobile scrolling issues */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+  }
+  
+  /* Prevent iOS Safari bounce effect and address bar issues */
+  @supports (-webkit-touch-callout: none) {
+    body {
+      height: -webkit-fill-available;
+    }
+  }
+}
+
+/* Mobile-specific fixes */
+@media (max-width: 1024px) {
+  body {
+    position: fixed;
+    overflow: hidden;
+  }
+  
+  /* Prevent pull-to-refresh */
+  html {
+    overscroll-behavior-y: none;
+  }
+}
