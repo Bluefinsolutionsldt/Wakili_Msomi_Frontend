@@ -49,7 +49,14 @@ export default function Home() {
         onConversationsChange={(value: boolean) => setIsNewConversation(value)}
       />
 
-        {/* Chat Area - Scrollable */}
+      {/* Right side content area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Topbar - After sidebar */}
+        <div className="flex-shrink-0 relative z-30 w-full">
+          <Topbar />
+        </div>
+
+        {/* Chat Area - Below Topbar */}
         <div className="flex-1 flex flex-col overflow-hidden">
           <Chat
             selectedConversationId={selectedConversationId}
@@ -60,5 +67,6 @@ export default function Home() {
           />
         </div>
       </div>
+    </div>
   );
 }
