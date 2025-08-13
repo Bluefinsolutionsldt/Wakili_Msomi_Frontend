@@ -199,163 +199,163 @@ const MessageBubble = ({
   );
 };
 
-interface WelcomeScreenProps {
-  user: any;
-}
+// interface WelcomeScreenProps {
+//   user: any;
+// }
 
-const WelcomeScreen = ({ user }: WelcomeScreenProps) => {
-  const [activeTab, setActiveTab] = useState("All");
-  const tabs = ["All", "Text", "Image", "Video", "Music", "Analytics"];
+// const WelcomeScreen = ({ user }: WelcomeScreenProps) => {
+//   const [activeTab, setActiveTab] = useState("All");
+//   const tabs = ["All", "Text", "Image", "Video", "Music", "Analytics"];
 
-  const featureCards = [
-    {
-      icon: Bookmark,
-      title: "Legal Templates",
-      description: "Ready-to-use legal document templates and clauses.",
-      gradient: "from-blue-500/10 to-blue-600/5",
-      iconBg: "bg-blue-500/20",
-      iconColor: "text-blue-400",
-    },
-    {
-      icon: FileText,
-      title: "Document Analysis",
-      description: "AI-powered analysis of contracts and legal documents.",
-      gradient: "from-[#FFD45E]/10 to-[#e6bf55]/5",
-      iconBg: "bg-[#FFD45E]/20",
-      iconColor: "text-[#FFD45E]",
-    },
-    {
-      icon: Globe,
-      title: "Multi-jurisdiction Support",
-      description: "Legal guidance across different legal systems.",
-      gradient: "from-green-500/10 to-green-600/5",
-      iconBg: "bg-green-500/20",
-      iconColor: "text-green-400",
-    },
-  ];
+//   const featureCards = [
+//     {
+//       icon: Bookmark,
+//       title: "Legal Templates",
+//       description: "Ready-to-use legal document templates and clauses.",
+//       gradient: "from-blue-500/10 to-blue-600/5",
+//       iconBg: "bg-blue-500/20",
+//       iconColor: "text-blue-400",
+//     },
+//     {
+//       icon: FileText,
+//       title: "Document Analysis",
+//       description: "AI-powered analysis of contracts and legal documents.",
+//       gradient: "from-[#FFD45E]/10 to-[#e6bf55]/5",
+//       iconBg: "bg-[#FFD45E]/20",
+//       iconColor: "text-[#FFD45E]",
+//     },
+//     {
+//       icon: Globe,
+//       title: "Multi-jurisdiction Support",
+//       description: "Legal guidance across different legal systems.",
+//       gradient: "from-green-500/10 to-green-600/5",
+//       iconBg: "bg-green-500/20",
+//       iconColor: "text-green-400",
+//     },
+//   ];
 
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
-      {/* Main Welcome */}
-      <div className="text-center mb-8 sm:mb-12 max-w-3xl">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="mb-6 sm:mb-8"
-        >
-          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-[#FFD45E] via-[#e6bf55] to-[#d4a94a] rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-2xl mx-auto mb-4 sm:mb-6 ring-4 ring-[#FFD45E]/10 p-1.5 sm:p-2">
-            <div className="relative w-full h-full rounded-xl sm:rounded-2xl overflow-hidden">
-              <Image
-                src="/wakilimsomi.jpeg"
-                alt="Wakili Msomi"
-                fill
-                className="object-cover"
-                sizes="(max-width: 640px) 64px, 80px"
-              />
-            </div>
-          </div>
-        </motion.div>
+//   return (
+//     <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
+//       {/* Main Welcome */}
+//       <div className="text-center mb-8 sm:mb-12 max-w-3xl">
+//         <motion.div
+//           initial={{ scale: 0.8, opacity: 0 }}
+//           animate={{ scale: 1, opacity: 1 }}
+//           transition={{ delay: 0.1 }}
+//           className="mb-6 sm:mb-8"
+//         >
+//           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-[#FFD45E] via-[#e6bf55] to-[#d4a94a] rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-2xl mx-auto mb-4 sm:mb-6 ring-4 ring-[#FFD45E]/10 p-1.5 sm:p-2">
+//             <div className="relative w-full h-full rounded-xl sm:rounded-2xl overflow-hidden">
+//               <Image
+//                 src="/wakilimsomi.jpeg"
+//                 alt="Wakili Msomi"
+//                 fill
+//                 className="object-cover"
+//                 sizes="(max-width: 640px) 64px, 80px"
+//               />
+//             </div>
+//           </div>
+//         </motion.div>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight"
-        >
-          How can I help you today?
-        </motion.h1>
+//         <motion.h1
+//           initial={{ opacity: 0, y: 20 }}
+//           animate={{ opacity: 1, y: 0 }}
+//           transition={{ delay: 0.2 }}
+//           className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight"
+//         >
+//           How can I help you today?
+//         </motion.h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="text-gray-400 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto px-4"
-        >
-          Your AI-powered legal assistant is ready to provide expert guidance on
-          legal matters, document analysis, and professional consultation.
-        </motion.p>
+//         <motion.p
+//           initial={{ opacity: 0, y: 20 }}
+//           animate={{ opacity: 1, y: 0 }}
+//           transition={{ delay: 0.3 }}
+//           className="text-gray-400 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto px-4"
+//         >
+//           Your AI-powered legal assistant is ready to provide expert guidance on
+//           legal matters, document analysis, and professional consultation.
+//         </motion.p>
 
-        {/* Free Prompts Welcome Message */}
-        {user && user.subscription_status === "free" && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mt-4 p-4 bg-[#FFD45E]/10 border border-[#FFD45E]/20 rounded-2xl max-w-md mx-auto"
-          >
-            <div className="flex items-center justify-center space-x-2 mb-2">
-              <Sparkles className="h-5 w-5 text-[#FFD45E]" />
-              <span className="text-[#FFD45E] font-semibold">Welcome!</span>
-            </div>
-            <p className="text-sm text-gray-300 text-center">
-              You have{" "}
-              <span className="font-bold text-[#FFD45E]">
-                {user.free_prompts_remaining ?? 3} free prompts
-              </span>{" "}
-              to explore Wakili Msomi. Ask me anything about legal matters!
-            </p>
-          </motion.div>
-        )}
-      </div>
+//         {/* Free Prompts Welcome Message */}
+//         {user && user.subscription_status === "free" && (
+//           <motion.div
+//             initial={{ opacity: 0, y: 20 }}
+//             animate={{ opacity: 1, y: 0 }}
+//             transition={{ delay: 0.4 }}
+//             className="mt-4 p-4 bg-[#FFD45E]/10 border border-[#FFD45E]/20 rounded-2xl max-w-md mx-auto"
+//           >
+//             <div className="flex items-center justify-center space-x-2 mb-2">
+//               <Sparkles className="h-5 w-5 text-[#FFD45E]" />
+//               <span className="text-[#FFD45E] font-semibold">Welcome!</span>
+//             </div>
+//             <p className="text-sm text-gray-300 text-center">
+//               You have{" "}
+//               <span className="font-bold text-[#FFD45E]">
+//                 {user.free_prompts_remaining ?? 3} free prompts
+//               </span>{" "}
+//               to explore Wakili Msomi. Ask me anything about legal matters!
+//             </p>
+//           </motion.div>
+//         )}
+//       </div>
 
-      {/* Feature Cards */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12 w-full max-w-5xl"
-      >
-        {featureCards.map((card, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 + index * 0.1 }}
-            whileHover={{ scale: 1.03, y: -4 }}
-            className={`bg-gradient-to-br ${card.gradient} backdrop-blur-sm border border-gray-700/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 cursor-pointer transition-all hover:border-gray-600/50 hover:shadow-lg hover:shadow-[#FFD45E]/5 touch-manipulation`}
-          >
-            <div
-              className={`w-10 h-10 sm:w-12 sm:h-12 ${card.iconBg} rounded-lg sm:rounded-xl flex items-center justify-center mb-3 sm:mb-4 ring-2 ring-gray-700/20`}
-            >
-              <card.icon
-                className={`w-5 h-5 sm:w-6 sm:h-6 ${card.iconColor}`}
-              />
-            </div>
-            <h3 className="text-white font-semibold mb-2 text-base sm:text-lg">
-              {card.title}
-            </h3>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              {card.description}
-            </p>
-          </motion.div>
-        ))}
-      </motion.div>
+//       {/* Feature Cards */}
+//       <motion.div
+//         initial={{ opacity: 0, y: 30 }}
+//         animate={{ opacity: 1, y: 0 }}
+//         transition={{ delay: 0.4 }}
+//         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12 w-full max-w-5xl"
+//       >
+//         {featureCards.map((card, index) => (
+//           <motion.div
+//             key={index}
+//             initial={{ opacity: 0, y: 20 }}
+//             animate={{ opacity: 1, y: 0 }}
+//             transition={{ delay: 0.5 + index * 0.1 }}
+//             whileHover={{ scale: 1.03, y: -4 }}
+//             className={`bg-gradient-to-br ${card.gradient} backdrop-blur-sm border border-gray-700/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 cursor-pointer transition-all hover:border-gray-600/50 hover:shadow-lg hover:shadow-[#FFD45E]/5 touch-manipulation`}
+//           >
+//             <div
+//               className={`w-10 h-10 sm:w-12 sm:h-12 ${card.iconBg} rounded-lg sm:rounded-xl flex items-center justify-center mb-3 sm:mb-4 ring-2 ring-gray-700/20`}
+//             >
+//               <card.icon
+//                 className={`w-5 h-5 sm:w-6 sm:h-6 ${card.iconColor}`}
+//               />
+//             </div>
+//             <h3 className="text-white font-semibold mb-2 text-base sm:text-lg">
+//               {card.title}
+//             </h3>
+//             <p className="text-gray-400 text-sm leading-relaxed">
+//               {card.description}
+//             </p>
+//           </motion.div>
+//         ))}
+//       </motion.div>
 
-      {/* Category Tabs */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        className="flex items-center space-x-1 sm:space-x-2 p-1.5 sm:p-2 bg-gray-800/40 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-gray-700/30 overflow-x-auto max-w-full"
-      >
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm font-medium transition-all whitespace-nowrap touch-manipulation ${
-              activeTab === tab
-                ? "bg-[#FFD45E] text-black shadow-lg"
-                : "text-gray-400 hover:text-white hover:bg-gray-700/50"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </motion.div>
-    </div>
-  );
-};
+//       {/* Category Tabs */}
+//       <motion.div
+//         initial={{ opacity: 0, y: 20 }}
+//         animate={{ opacity: 1, y: 0 }}
+//         transition={{ delay: 0.8 }}
+//         className="flex items-center space-x-1 sm:space-x-2 p-1.5 sm:p-2 bg-gray-800/40 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-gray-700/30 overflow-x-auto max-w-full"
+//       >
+//         {tabs.map((tab) => (
+//           <button
+//             key={tab}
+//             onClick={() => setActiveTab(tab)}
+//             className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm font-medium transition-all whitespace-nowrap touch-manipulation ${
+//               activeTab === tab
+//                 ? "bg-[#FFD45E] text-black shadow-lg"
+//                 : "text-gray-400 hover:text-white hover:bg-gray-700/50"
+//             }`}
+//           >
+//             {tab}
+//           </button>
+//         ))}
+//       </motion.div>
+//     </div>
+//   );
+// };
 
 export default function Chat({
   selectedConversationId,
@@ -376,7 +376,7 @@ export default function Chat({
     user,
     canSendMessage,
     decrementFreePrompt,
-    getSubscriptionStatus,
+    refreshSubscriptionStatus,
   } = useAuth();
 
   const scrollToBottom = () => {
@@ -399,7 +399,7 @@ export default function Chat({
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       try {
-        await getSubscriptionStatus();
+        await refreshSubscriptionStatus();
       } catch (err) {
         console.error("Failed to fetch subscription status", err);
       }
@@ -466,7 +466,7 @@ export default function Chat({
     // Check if user can send message (subscription or free prompts)
     if (!canSendMessage()) {
       setShowSubscriptionModal(true);
-      await getSubscriptionStatus();
+      await refreshSubscriptionStatus();
       if (canSendMessage()) {
         setShowSubscriptionModal(false);
       }
@@ -532,9 +532,10 @@ export default function Chat({
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">
           <div className="min-h-full">
-            {messages.length === 0 && !isLoading ? (
+            {/* {messages.length === 0 && !isLoading ? (
               <WelcomeScreen user={user} />
-            ) : (
+            ) : ( */}
+
               <div className="py-6 space-y-6">
                 {messages.map((message, index) => (
                   <MessageBubble key={index} message={message} index={index} />
@@ -575,7 +576,7 @@ export default function Chat({
 
                 <div ref={messagesEndRef} />
               </div>
-            )}
+            {/* )} */}
           </div>
         </ScrollArea>
       </div>

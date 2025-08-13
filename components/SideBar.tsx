@@ -153,33 +153,60 @@ export default function SideBar({
   const [searchQuery, setSearchQuery] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [hasLoadedConversations, setHasLoadedConversations] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !hasLoadedConversations && !isLoading) {
       loadConversations();
+      setHasLoadedConversations(true);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, hasLoadedConversations, isLoading]);
 
   useEffect(() => {
-    if (isAuthenticated && selectedConversationId === undefined) {
+    if (
+      isAuthenticated &&
+      selectedConversationId === undefined &&
+      hasLoadedConversations &&
+      !isRefreshing
+    ) {
       const refreshTimer = setTimeout(() => {
         loadConversations();
       }, 500);
       return () => clearTimeout(refreshTimer);
     }
-  }, [selectedConversationId, isAuthenticated]);
+  }, [
+    selectedConversationId,
+    isAuthenticated,
+    hasLoadedConversations,
+    isRefreshing,
+  ]);
 
   useEffect(() => {
     if (isNewConversation) {
+      // Force refresh conversations when new conversation is created
+      setHasLoadedConversations(false);
       loadConversations();
       onConversationsChange(false);
     }
   }, [isNewConversation]);
 
+  // Manual refresh function for conversations
+  const refreshConversations = () => {
+    setHasLoadedConversations(false);
+    loadConversations();
+  };
+
   const loadConversations = async () => {
+    // Prevent multiple simultaneous calls
+    if (isLoading || isRefreshing) {
+      return;
+    }
+
     try {
       setIsLoading(true);
+      setIsRefreshing(true);
       setError(null);
       const conversations = await api.getConversations();
 
@@ -193,6 +220,8 @@ export default function SideBar({
         if (!selectedConversationId) {
           onConversationSelect(sortedConversations[0].id);
         }
+      } else {
+        setConversations([]);
       }
     } catch (error: any) {
       console.error("Error loading conversations:", error);
@@ -204,6 +233,7 @@ export default function SideBar({
       setError(error?.message || "Failed to load conversations");
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -214,12 +244,9 @@ export default function SideBar({
 
       const newConversation = await api.createConversation();
 
+      // Update conversations list directly instead of calling loadConversations
       setConversations((prev) => [newConversation, ...prev]);
       onConversationSelect(newConversation.id);
-
-      setTimeout(() => {
-        loadConversations();
-      }, 1000);
     } catch (error: any) {
       console.error("Error creating conversation:", error);
 
@@ -244,6 +271,7 @@ export default function SideBar({
       setError(null);
       await api.deleteConversation(conversationId);
 
+      // Update conversations list directly instead of calling loadConversations
       setConversations((prev) =>
         prev.filter((conv) => conv.id !== conversationId)
       );
@@ -256,10 +284,6 @@ export default function SideBar({
           onConversationSelect(remainingConversations[0].id);
         }
       }
-
-      setTimeout(() => {
-        loadConversations();
-      }, 500);
     } catch (error: any) {
       console.error("Error deleting conversation:", error);
 
@@ -291,44 +315,6 @@ export default function SideBar({
   return (
     <>
       {/* Mobile Toggle Button — always shows in mobile view */}
-      <motion.button
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => {
-          if (isAuthenticated) {
-            setIsMobileOpen(!isMobileOpen);
-          } else {
-            console.log("User not authenticated — sidebar locked.");
-          }
-        }}
-        className="fixed top-4 left-4 z-[9999] lg:hidden p-2 bg-[#2a2a2a] hover:bg-[#333333] text-white rounded-lg shadow-lg transition-all duration-300"
-      >
-        <AnimatePresence mode="wait">
-          {isMobileOpen ? (
-            <motion.div
-              key="close"
-              initial={{ rotate: -90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: 90, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <X className="w-5 h-5" />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="menu"
-              initial={{ rotate: 90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: -90, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Menu className="w-5 h-5" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.button>
 
       {/* Sidebar */}
       <motion.div
@@ -340,204 +326,225 @@ export default function SideBar({
         }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={`${
-          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0 "
-        } fixed lg:relative h-full flex-shrink-0 transition-transform duration-300 ease-in-out z-40 lg:z-0`}
+          isMobileOpen ? "translate-x-0" : "-translate-x-full "
+        } fixed lg:relative h-full flex-shrink-0 transition-transform duration-300 ease-in-out z-50 lg:z-0`}
       >
-        <div className="w-full h-full bg-[#171717] flex flex-col border-r border-gray-800/30 relative">
-          {/* Desktop Collapse Toggle */}
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden lg:flex absolute -right-3 top-6 z-10 w-6 h-6 bg-[#2a2a2a] hover:bg-[#333333] border border-gray-700 rounded-full items-center justify-center transition-colors"
-          >
-            <AnimatePresence mode="wait">
-              {isCollapsed ? (
-                <motion.div
-                  key="expand"
-                  initial={{ rotate: -180, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 180, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronRight className="w-3 h-3 text-gray-300" />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="collapse"
-                  initial={{ rotate: 180, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: -180, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronLeft className="w-3 h-3 text-gray-300" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.button>
+        <div
+          className={`w-full h-full flex flex-col lg:border-r lg:border-gray-800/30 relative ${
+            isCollapsed ? "lg:bg-[#171717] bg-transparent" : "bg-[#171717]"
+          }`}
+        >
+          {/* Sidebar Topbar */}
+          <div className="flex-shrink-0 px-4 sm:px-8 py-3 md:py-8 bg-transparent">
+            <div className="flex items-center justify-between">
+              <AnimatePresence mode="wait">
+                {!isCollapsed ? (
+                  <motion.h1
+                    key="expanded-title"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-white font-medium text-sm"
+                  >
+                    Chats
+                  </motion.h1>
+                ) : (
+                  <motion.div
+                    key="collapsed-title"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.2 }}
+                    className="w-6 h-6"
+                  />
+                )}
+              </AnimatePresence>
 
-          {/* Header */}
-          <div className="flex-shrink-0 p-3 border-b border-gray-800/30">
-            <AnimatePresence mode="wait">
-              {!isCollapsed ? (
-                <motion.div
-                  key="expanded-header"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex items-center justify-between mb-3"
-                >
-                  <h1 className="text-white font-medium text-sm">Chats</h1>
+              {/* Toggle Button */}
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="w-6 h-6 aspect-square bg-[#2a2a2a] hover:bg-[#333333] border border-gray-700 rounded-full items-center justify-center transition-colors flex"
+              >
+                <AnimatePresence mode="wait">
+                  {isCollapsed ? (
+                    <motion.div
+                      key="expand"
+                      initial={{ rotate: -180, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: 180, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronRight className="w-3 h-3 text-gray-300" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="collapse"
+                      initial={{ rotate: 180, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: -180, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronLeft className="w-3 h-3 text-gray-300" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+            </div>
+          </div>
+
+          {/* Sidebar Content */}
+          <div
+            className={`flex-1 flex flex-col overflow-hidden ${
+              isCollapsed ? "lg:block hidden" : "block"
+            }`}
+          >
+            {/* New Chat Button */}
+            <div className="flex-shrink-0 px-3 pt-1 pb-2">
+              <AnimatePresence mode="wait">
+                {!isCollapsed ? (
                   <motion.button
+                    key="expanded-new-chat"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleNewConversation}
-                    className="p-1.5 rounded-md hover:bg-gray-800/50 transition-colors"
+                    className="w-full flex items-center justify-center p-2 rounded-md hover:bg-gray-800/50 transition-colors text-gray-400 hover:text-white"
                     title="New chat"
                   >
-                    <Plus className="w-4 h-4 text-gray-400" />
+                    <Plus className="w-4 h-4 mr-2" />
+                    <span className="text-sm">New Chat</span>
                   </motion.button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="collapsed-header"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex flex-col items-center space-y-3"
-                >
+                ) : (
                   <motion.button
+                    key="collapsed-new-chat"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.2 }}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={handleNewConversation}
-                    className="p-2 rounded-lg hover:bg-gray-800/50 transition-colors w-10 h-10 flex items-center justify-center"
+                    className="w-full p-2 rounded-lg hover:bg-gray-800/50 transition-colors flex items-center justify-center"
                     title="New chat"
                   >
                     <Plus className="w-5 h-5 text-gray-400" />
                   </motion.button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                )}
+              </AnimatePresence>
+            </div>
 
-            {/* Search - Only show when expanded */}
-            <AnimatePresence>
-              {!isCollapsed && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="relative overflow-hidden"
-                >
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-3.5 w-3.5" />
-                  <Input
-                    placeholder="Search"
-                    value={searchQuery}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setSearchQuery(e.target.value)
-                    }
-                    className="pl-8 pr-3 h-8 bg-gray-800/50 border-gray-700/50 focus:border-gray-600 focus:ring-0 placeholder:text-gray-500 text-white text-sm rounded-md"
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Conversations List */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2">
-            <div className="space-y-1">
-              {filteredConversations.length === 0 ? (
-                <AnimatePresence>
-                  {!isCollapsed && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="text-center py-8"
-                    >
-                      <MessageSquare className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                      <p className="text-gray-500 text-sm">No chats yet</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              ) : (
-                filteredConversations.map((conversation, index) => (
+            {/* Search */}
+            <div className="flex-shrink-0 px-3 pb-3">
+              <AnimatePresence>
+                {!isCollapsed && (
                   <motion.div
-                    key={conversation.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={() => handleConversationSelect(conversation.id)}
-                    className={`group flex items-center justify-between p-2 rounded-md cursor-pointer transition-all duration-200 ${
-                      selectedConversationId === conversation.id
-                        ? "bg-gray-800 shadow-sm"
-                        : "hover:bg-gray-800/50"
-                    }`}
-                    title={
-                      isCollapsed
-                        ? getConversationSummary(conversation)
-                        : undefined
-                    }
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="relative overflow-hidden"
                   >
-                    <div className="flex items-center space-x-2 flex-1 min-w-0">
-                      <MessageCircle
-                        className={`${
-                          isCollapsed ? "w-5 h-5" : "w-4 h-4"
-                        } text-gray-500 flex-shrink-0`}
-                      />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-3.5 w-3.5" />
+                    <Input
+                      placeholder="Search"
+                      value={searchQuery}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setSearchQuery(e.target.value)
+                      }
+                      className="pl-8 pr-3 h-8 bg-gray-800/50 border-gray-700/50 focus:border-gray-600 focus:ring-0 placeholder:text-gray-500 text-white text-sm rounded-md"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Conversations List */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2">
+              <div className="space-y-1">
+                {filteredConversations.length === 0 ? (
+                  <AnimatePresence>
+                    {!isCollapsed && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="text-center py-8"
+                      >
+                        <MessageSquare className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                        <p className="text-gray-500 text-sm">No chats yet</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                ) : (
+                  filteredConversations.map((conversation, index) => (
+                    <motion.div
+                      key={conversation.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      onClick={() => handleConversationSelect(conversation.id)}
+                      className={`group flex items-center justify-between p-2 rounded-md cursor-pointer transition-all duration-200 ${
+                        selectedConversationId === conversation.id
+                          ? "bg-gray-800 shadow-sm"
+                          : "hover:bg-gray-800/50"
+                      }`}
+                      title={
+                        isCollapsed
+                          ? getConversationSummary(conversation)
+                          : undefined
+                      }
+                    >
+                      <div className="flex items-center space-x-2 flex-1 min-w-0">
+                        <MessageCircle
+                          className={`${
+                            isCollapsed ? "w-5 h-5" : "w-4 h-4"
+                          } text-gray-500 flex-shrink-0`}
+                        />
+                        <AnimatePresence>
+                          {!isCollapsed && (
+                            <motion.span
+                              initial={{ opacity: 0, width: 0 }}
+                              animate={{ opacity: 1, width: "auto" }}
+                              exit={{ opacity: 0, width: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="text-white text-sm truncate overflow-hidden"
+                            >
+                              {getConversationSummary(conversation)}
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
+                      </div>
                       <AnimatePresence>
                         {!isCollapsed && (
-                          <motion.span
-                            initial={{ opacity: 0, width: 0 }}
-                            animate={{ opacity: 1, width: "auto" }}
-                            exit={{ opacity: 0, width: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="text-white text-sm truncate overflow-hidden"
+                          <motion.button
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 0, scale: 1 }}
+                            whileHover={{ opacity: 1, scale: 1.1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteConversation(conversation.id, e);
+                            }}
+                            className="group-hover:opacity-100 p-1 text-gray-500 hover:text-red-400 transition-all"
                           >
-                            {getConversationSummary(conversation)}
-                          </motion.span>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </motion.button>
                         )}
                       </AnimatePresence>
-                    </div>
-                    <AnimatePresence>
-                      {!isCollapsed && (
-                        <motion.button
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 0, scale: 1 }}
-                          whileHover={{ opacity: 1, scale: 1.1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteConversation(conversation.id, e);
-                          }}
-                          className="group-hover:opacity-100 p-1 text-gray-500 hover:text-red-400 transition-all"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </motion.button>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                ))
-              )}
+                    </motion.div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>
       </motion.div>
-
-      {/* Mobile Overlay */}
-      <AnimatePresence>
-        {isMobileOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.5 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black lg:hidden z-30"
-            onClick={() => setIsMobileOpen(false)}
-          />
-        )}
-      </AnimatePresence>
     </>
   );
 }

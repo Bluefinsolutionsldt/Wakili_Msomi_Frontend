@@ -1,9 +1,10 @@
 "use client";
+
 import React from "react";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import AuthForm from "./auth/AuthForm";
 import SubscriptionModal from "./SubscriptionModal";
 import {
   UserCircleIcon,
@@ -24,10 +25,10 @@ export default function Topbar({
   onToggleSidebar,
 }: TopbarProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, user, logout } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -49,26 +50,26 @@ export default function Topbar({
     <header className="relative bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] border-b border-gray-800/30 backdrop-blur-sm">
       <div className="px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between">
-          {/* Logo and Brand */}
-          <div className="flex items-center space-x-3">
-            {/* Mobile Menu Button - Only visible on mobile and when onToggleSidebar is provided */}
-            {onToggleSidebar && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onToggleSidebar}
-                className="lg:hidden p-2.5 bg-gradient-to-r from-[#FFD45E] to-[#e6bf55] rounded-xl shadow-lg hover:from-[#e6bf55] hover:to-[#d4a94a] transition-all duration-300 border border-[#FFD45E]/20 touch-manipulation"
-                aria-label={isSidebarOpen ? "Close menu" : "Open menu"}
-              >
-                {isSidebarOpen ? (
-                  <XMarkIcon className="w-5 h-5 text-black" />
-                ) : (
-                  <Bars3Icon className="w-5 h-5 text-black" />
-                )}
-              </motion.button>
-            )}
+          {/* Mobile Menu Button - Only visible on mobile and when onToggleSidebar is provided */}
+          {onToggleSidebar && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onToggleSidebar}
+              className="lg:hidden p-2.5 bg-gradient-to-r from-[#FFD45E] to-[#e6bf55] rounded-xl shadow-lg hover:from-[#e6bf55] hover:to-[#d4a94a] transition-all duration-300 border border-[#FFD45E]/20 touch-manipulation"
+              aria-label={isSidebarOpen ? "Close menu" : "Open menu"}
+            >
+              {isSidebarOpen ? (
+                <XMarkIcon className="w-5 h-5 text-black" />
+              ) : (
+                <Bars3Icon className="w-5 h-5 text-black" />
+              )}
+            </motion.button>
+          )}
 
-            {/* Logo - Hidden on mobile when menu button is present, visible on desktop */}
+          {/* Logo and Brand - Centered on mobile */}
+          <div className="flex items-center space-x-3 lg:ml-0 ml-auto mr-auto lg:mr-0">
+            {/* Logo */}
             <div
               className={`${
                 onToggleSidebar ? "hidden lg:flex" : "flex"
@@ -174,7 +175,10 @@ export default function Topbar({
                         </button>
 
                         <button
-                          onClick={logout}
+                          onClick={() => {
+                            logout();
+                            router.push("/auth");
+                          }}
                           className="flex items-center w-full px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
                         >
                           <svg
@@ -201,7 +205,7 @@ export default function Topbar({
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setShowLoginModal(true)}
+                onClick={() => router.push("/auth")}
                 className="bg-gradient-to-r from-[#FFD45E] to-[#e6bf55] hover:from-[#e6bf55] hover:to-[#d4a94a] text-black font-semibold px-6 py-2.5 rounded-xl shadow-lg transition-all duration-300"
               >
                 Sign In
@@ -210,45 +214,6 @@ export default function Topbar({
           </div>
         </div>
       </div>
-
-      {/* Login Modal */}
-      <AnimatePresence>
-        {showLoginModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative max-w-md w-full"
-            >
-              <AuthForm />
-              <button
-                onClick={() => setShowLoginModal(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-300 bg-black/20 hover:bg-black/40 rounded-full p-2 transition-all"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Subscription Modal */}
       <SubscriptionModal

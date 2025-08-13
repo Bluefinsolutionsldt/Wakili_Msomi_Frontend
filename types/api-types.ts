@@ -1,3 +1,5 @@
+"use client";
+
 export interface APIInstance {
   token: string | null;
   currentConversationId: string | null;

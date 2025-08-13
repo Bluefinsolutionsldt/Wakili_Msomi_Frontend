@@ -1,3 +1,5 @@
+"use client";
+
 export interface ApiResponse {
   response: string;
   conversation_id: string;

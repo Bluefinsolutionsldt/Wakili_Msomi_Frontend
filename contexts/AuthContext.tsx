@@ -1,4 +1,5 @@
 "use client";
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import api from "@/services/api";
 import { User } from "@/types/auth";
@@ -13,6 +14,7 @@ interface AuthContextType {
   canSendMessage: () => boolean;
   decrementFreePrompt: () => void;
   getSubscriptionStatus: () => Promise<any>;
+  refreshSubscriptionStatus: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -25,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
   canSendMessage: () => false,
   decrementFreePrompt: () => {},
   getSubscriptionStatus: async () => {},
+  refreshSubscriptionStatus: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -32,6 +35,7 @@ export const useAuth = () => useContext(AuthContext);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [hasFetchedSubscription, setHasFetchedSubscription] = useState(false);
 
   // Check authentication status on mount
   useEffect(() => {
@@ -51,10 +55,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         free_prompts_remaining: storedPrompts ? parseInt(storedPrompts) : 3,
       });
       api.setToken(token);
+
       // Try to get updated user info
       refreshUserInfo().catch(console.error);
     }
   }, []);
+
+  // Call getSubscriptionStatus only once after user is initialized
+  useEffect(() => {
+    if (user && isAuthenticated && !hasFetchedSubscription) {
+      getSubscriptionStatus().catch(console.error);
+      setHasFetchedSubscription(true);
+    }
+  }, [user, isAuthenticated, hasFetchedSubscription]);
 
   const refreshUserInfo = async () => {
     try {
@@ -110,7 +123,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const canSendMessage = (): boolean => {
-    if (!user) return false;
+    if (!user) {
+      return false;
+    }
 
     // If user has active subscription, allow messages
     if (user.subscription_status && user.subscription_status !== "free") {
@@ -118,11 +133,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // For free users, check remaining prompts
-    return (user.free_prompts_remaining ?? 0) > 0;
+    const canSend = (user.free_prompts_remaining ?? 0) > 0;
+    return canSend;
   };
 
   const getSubscriptionStatus = async () => {
-    const response = await api.getSubscriptionStatus();
+    console.log("=== SUBSCRIPTION STATUS UPDATE ===");
+    console.log(
+      "Before - localStorage:",
+      localStorage.getItem("free_prompts_remaining")
+    );
+    console.log("Before - user state:", user);
+
+    let response;
+    try {
+      response = await api.getSubscriptionStatus();
+      console.log("Backend response:", response);
+    } catch (error) {
+      console.error("Error getting subscription status:", error);
+      return;
+    }
+
     if (response.subscription.has_subscription) {
       setUser((prevUser) => {
         if (!prevUser) return null;
@@ -132,18 +163,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           subscription_expires: response.subscription.expires_at,
         };
       });
-    } else if (response.free_prompts_remaining > 0) {
+    } else if (response.free_messages_remaining > 0) {
       setUser((prevUser) => {
         if (!prevUser) return null;
+        // Update localStorage with backend data
+        if (typeof window !== "undefined") {
+          localStorage.setItem(
+            "free_prompts_remaining",
+            response.free_messages_remaining.toString()
+          );
+        }
         return {
           ...prevUser,
           subscription_status: "free",
-          free_prompts_remaining: response.free_prompts_remaining,
+          free_prompts_remaining: response.free_messages_remaining,
         };
       });
     } else {
       setUser((prevUser) => {
         if (!prevUser) return null;
+        // Update localStorage with backend data (0 prompts)
+        if (typeof window !== "undefined") {
+          localStorage.setItem("free_prompts_remaining", "0");
+        }
         return {
           ...prevUser,
           subscription_status: "free",
@@ -151,6 +193,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
       });
     }
+
+    // Log after update
+    setTimeout(() => {
+      console.log(
+        "After - localStorage:",
+        localStorage.getItem("free_prompts_remaining")
+      );
+      console.log("After - user state:", user);
+      console.log("=== END SUBSCRIPTION STATUS UPDATE ===");
+    }, 100);
+  };
+
+  // Manual refresh function for subscription status
+  const refreshSubscriptionStatus = async () => {
+    setHasFetchedSubscription(false); // Reset flag to allow fresh fetch
+    await getSubscriptionStatus();
   };
 
   const decrementFreePrompt = () => {
@@ -276,6 +334,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         canSendMessage,
         decrementFreePrompt,
         getSubscriptionStatus,
+        refreshSubscriptionStatus,
       }}
     >
       {children}

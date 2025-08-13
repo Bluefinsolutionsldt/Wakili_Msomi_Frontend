@@ -1,4 +1,4 @@
-// src/app/page.tsx
+// components/HomeClient.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,10 +7,10 @@ import SideBar from "@/components/SideBar";
 import Chat from "@/components/Chat";
 import Topbar from "@/components/Topbar";
 import { useAuth } from "@/contexts/AuthContext";
+import ClientOnly from "@/components/ClientOnly";
 
-export default function Home() {
-  const [selectedConversationId, setSelectedConversationId] =
-    useState<string>();
+export default function HomeClient() {
+  const [selectedConversationId, setSelectedConversationId] = useState<string>();
   const [isNewConversation, setIsNewConversation] = useState(false);
   const { isAuthenticated } = useAuth();
   const router = useRouter();
@@ -40,25 +40,38 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gradient-to-b from-[#1a1a1a] to-[#0f0f0f] fixed inset-0">
-      {/* Sidebar - Full height on the left */}
-      <SideBar
-        selectedConversationId={selectedConversationId}
-        onConversationSelect={handleConversationSelect}
-        isNewConversation={isNewConversation}
-        onConversationsChange={(value: boolean) => setIsNewConversation(value)}
-      />
+    <ClientOnly>
+      <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-b from-[#1a1a1a] to-[#0f0f0f] fixed inset-0">
+        {/* SEO-friendly heading for screen readers */}
+        <h1 className="sr-only">Wakili Msomi - AI Legal Assistant Dashboard</h1>
+        
+        {/* Fixed Top Bar */}
+        <div className="flex-shrink-0 relative z-50 w-full">
+          <Topbar />
+        </div>
 
-        {/* Chat Area - Scrollable */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Chat
+        {/* Main Content Area - Below Top Bar */}
+        <div className="flex flex-1 overflow-hidden relative">
+          <SideBar
             selectedConversationId={selectedConversationId}
-            onNewConversation={handleNewConversation}
+            onConversationSelect={handleConversationSelect}
+            isNewConversation={isNewConversation}
             onConversationsChange={(value: boolean) =>
               setIsNewConversation(value)
             }
           />
+
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Chat
+              selectedConversationId={selectedConversationId}
+              onNewConversation={handleNewConversation}
+              onConversationsChange={(value: boolean) =>
+                setIsNewConversation(value)
+              }
+            />
+          </div>
         </div>
       </div>
+    </ClientOnly>
   );
 }

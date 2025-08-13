@@ -1,3 +1,5 @@
+"use client";
+
 export async function testNetworkConnectivity(url: string): Promise<boolean> {
   try {
     const controller = new AbortController();

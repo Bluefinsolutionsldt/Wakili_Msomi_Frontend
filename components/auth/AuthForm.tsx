@@ -92,7 +92,7 @@ export default function AuthForm() {
       } else {
         await login(formData.username, formData.password);
       }
-      router.push("/");
+      // Navigation will be handled by the auth page useEffect
     } catch (error: any) {
       console.error("Authentication error:", error);
 

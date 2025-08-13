@@ -1,3 +1,5 @@
+"use client";
+
 import type { APIInstance } from "@/types/api-types";
 
 // Mock API instance for server-side rendering
