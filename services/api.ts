@@ -4,7 +4,7 @@ import { getAPIInstance, setAPIInstance } from "@/utils/api-singleton";
 import { getNetworkErrorMessage } from "@/utils/network";
 import type { APIInstance } from "@/types/api-types";
 
-const API_BASE_URL = "http://192.168.100.25:8000";
+const API_BASE_URL = "http://84.247.138.245:8007";
 
 export class SheriaKiganjaniAPI implements APIInstance {
   public token: string | null = null;
