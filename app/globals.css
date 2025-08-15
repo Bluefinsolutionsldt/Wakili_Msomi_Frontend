@@ -68,7 +68,7 @@
   }
   
   /* Prevent pull-to-refresh */
-  html {
+  /* html {
     overscroll-behavior-y: none;
-  }
+  } */
 }

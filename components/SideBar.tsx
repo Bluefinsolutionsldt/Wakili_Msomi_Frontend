@@ -151,51 +151,67 @@ export default function SideBar({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [hasLoadedConversations, setHasLoadedConversations] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { isAuthenticated, logout } = useAuth();
 
-  useEffect(() => {
-    if (isAuthenticated && !hasLoadedConversations && !isLoading) {
-      loadConversations();
-      setHasLoadedConversations(true);
+  const createNewConversationOnLogin = async () => {
+    try {
+      const newConversation = await api.createConversation();
+      setConversations([newConversation]);
+      onConversationSelect(newConversation.id);
+    } catch (error: any) {
+      console.error("Error creating new conversation on login:", error);
+      setError("Failed to create new conversation");
     }
-  }, [isAuthenticated, hasLoadedConversations, isLoading]);
+  };
 
-  useEffect(() => {
-    if (
-      isAuthenticated &&
-      selectedConversationId === undefined &&
-      hasLoadedConversations &&
-      !isRefreshing
-    ) {
-      const refreshTimer = setTimeout(() => {
-        loadConversations();
-      }, 500);
-      return () => clearTimeout(refreshTimer);
+  const loadConversationsAndCreateNew = async () => {
+    // Prevent multiple simultaneous calls
+    if (isLoading || isRefreshing) {
+      return;
     }
-  }, [
-    selectedConversationId,
-    isAuthenticated,
-    hasLoadedConversations,
-    isRefreshing,
-  ]);
 
-  useEffect(() => {
-    if (isNewConversation) {
-      // Force refresh conversations when new conversation is created
-      setHasLoadedConversations(false);
-      loadConversations();
-      onConversationsChange(false);
+    try {
+      setIsLoading(true);
+      setIsRefreshing(true);
+      setError(null);
+
+      // Load existing conversations
+      const conversations = await api.getConversations();
+
+      if (conversations && conversations.length > 0) {
+        const sortedConversations = conversations.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        setConversations(sortedConversations);
+
+        if (!selectedConversationId) {
+          onConversationSelect(sortedConversations[0].id);
+        }
+      } else {
+        // No conversations exist, create a new one
+        setConversations([]);
+        await createNewConversationOnLogin();
+      }
+    } catch (error: any) {
+      console.error("Error loading conversations:", error);
+
+      if (handleAuthError(error, logout)) {
+        return;
+      }
+
+      setError(error?.message || "Failed to load conversations");
+
+      // If loading fails, still try to create a new conversation
+      await createNewConversationOnLogin();
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
-  }, [isNewConversation]);
-
-  // Manual refresh function for conversations
-  const refreshConversations = () => {
-    setHasLoadedConversations(false);
-    loadConversations();
   };
 
   const loadConversations = async () => {
@@ -235,6 +251,28 @@ export default function SideBar({
       setIsLoading(false);
       setIsRefreshing(false);
     }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && !hasLoadedConversations && !isLoading) {
+      loadConversationsAndCreateNew();
+      setHasLoadedConversations(true);
+    }
+  }, [isAuthenticated, hasLoadedConversations, isLoading]);
+
+  useEffect(() => {
+    if (isNewConversation) {
+      // Force refresh conversations when new conversation is created
+      setHasLoadedConversations(false);
+      loadConversations();
+      onConversationsChange(false);
+    }
+  }, [isNewConversation]);
+
+  // Manual refresh function for conversations
+  const refreshConversations = () => {
+    setHasLoadedConversations(false);
+    loadConversations();
   };
 
   const handleNewConversation = async () => {
@@ -366,7 +404,7 @@ export default function SideBar({
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className="w-6 h-6 aspect-square bg-[#2a2a2a] hover:bg-[#333333] border border-gray-700 rounded-full items-center justify-center transition-colors flex"
+                className="w-8 h-8 sm:w-6 sm:h-6 mt-3 sm:mt-0 aspect-square bg-[#2a2a2a] hover:bg-[#333333] border border-gray-700 rounded-full items-center justify-center transition-colors flex"
               >
                 <AnimatePresence mode="wait">
                   {isCollapsed ? (
@@ -377,7 +415,8 @@ export default function SideBar({
                       exit={{ rotate: 180, opacity: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <ChevronRight className="w-3 h-3 text-gray-300" />
+                      <ChevronRight className="hidden lg:block w-3 h-3 text-gray-300" />
+                      <Menu className="block lg:hidden w-6 h-6 text-gray-300" />
                     </motion.div>
                   ) : (
                     <motion.div
@@ -387,7 +426,7 @@ export default function SideBar({
                       exit={{ rotate: -180, opacity: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <ChevronLeft className="w-3 h-3 text-gray-300" />
+                      <ChevronLeft className="w-6 h-6 sm:w-3 sm:h-3 text-gray-300" />
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -524,7 +563,7 @@ export default function SideBar({
                         {!isCollapsed && (
                           <motion.button
                             initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 0, scale: 1 }}
+                            animate={{ opacity: 0.3, scale: 1 }}
                             whileHover={{ opacity: 1, scale: 1.1 }}
                             exit={{ opacity: 0, scale: 0.8 }}
                             onClick={(e) => {

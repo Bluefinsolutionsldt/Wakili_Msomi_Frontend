@@ -40,7 +40,7 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gradient-to-b from-[#1a1a1a] to-[#0f0f0f] fixed inset-0">
+    <div className="h-[100dvh] flex overflow-hidden bg-gradient-to-b from-[#1a1a1a] to-[#0f0f0f] fixed inset-0">
       {/* Sidebar - Full height on the left */}
       <SideBar
         selectedConversationId={selectedConversationId}
