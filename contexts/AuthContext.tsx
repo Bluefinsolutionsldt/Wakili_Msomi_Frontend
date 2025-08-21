@@ -10,7 +10,6 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>;
   signup: (username: string, password: string) => Promise<void>;
   logout: () => void;
-  refreshUserInfo: () => Promise<void>;
   canSendMessage: () => boolean;
   decrementFreePrompt: () => void;
   getSubscriptionStatus: () => Promise<any>;
@@ -23,7 +22,6 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   signup: async () => {},
   logout: () => {},
-  refreshUserInfo: async () => {},
   canSendMessage: () => false,
   decrementFreePrompt: () => {},
   getSubscriptionStatus: async () => {},
@@ -51,13 +49,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: username,
         email: "", // Email not used in username-based auth
         username,
-        subscription_status: "free",
-        free_prompts_remaining: storedPrompts ? parseInt(storedPrompts) : 3,
       });
       api.setToken(token);
 
       // Try to get updated user info
-      refreshUserInfo().catch(console.error);
+      getSubscriptionStatus().catch(console.error);
+      // refreshUserInfo().catch(console.error);
     }
   }, []);
 
@@ -69,58 +66,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, isAuthenticated, hasFetchedSubscription]);
 
-  const refreshUserInfo = async () => {
-    try {
-      if (!isAuthenticated) return;
-
-      const userInfo = await api.getUserInfo();
-      setUser((prevUser) => {
-        // If backend provides free_prompts_remaining, use it
-        // Otherwise, preserve existing count or default to 3 for new users
-        let freePromptsCount = prevUser?.free_prompts_remaining ?? 3;
-        if (
-          userInfo.free_prompts_remaining !== undefined &&
-          userInfo.free_prompts_remaining !== null
-        ) {
-          freePromptsCount = userInfo.free_prompts_remaining;
-        }
-
-        // Store the updated count in localStorage for persistence
-        if (typeof window !== "undefined") {
-          localStorage.setItem(
-            "free_prompts_remaining",
-            freePromptsCount.toString()
-          );
-        }
-
-        return {
-          ...prevUser,
-          id: prevUser?.id || userInfo.username,
-          email: prevUser?.email || "",
-          username: userInfo.username,
-          subscription_status: userInfo.subscription_status || "free",
-          free_prompts_remaining: freePromptsCount,
-          subscription_expires: userInfo.subscription_expires,
-        };
-      });
-    } catch (error) {
-      console.error("Failed to refresh user info:", error);
-      // If API call fails, ensure new users still get their 3 free prompts
-      if (
-        !user?.free_prompts_remaining &&
-        user?.subscription_status === "free"
-      ) {
-        setUser((prevUser) => ({
-          id: prevUser?.id || "",
-          email: prevUser?.email || "",
-          username: prevUser?.username,
-          subscription_status: prevUser?.subscription_status,
-          subscription_expires: prevUser?.subscription_expires,
-          free_prompts_remaining: 3,
-        }));
-      }
-    }
-  };
 
   const canSendMessage = (): boolean => {
     if (!user) {
@@ -241,22 +186,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Store user data
         localStorage.setItem("username", username);
+        const res = await api.getSubscriptionStatus();
+        localStorage.setItem("free_prompts_remaining", res.free_messages_remaining);
 
-        // Initialize user with existing prompt count or default to 3
-        const existingPrompts = localStorage.getItem("free_prompts_remaining");
-        const promptCount = existingPrompts ? parseInt(existingPrompts) : 3;
-
+        // Initialize user with existing prompt count or default to
+        const promptCount = res.free_messages_remaining ? parseInt(res.free_messages_remaining) : 5;
+        const subscription_status = res.subscription.has_subscription ? response.subscription.plan : "free";
         setUser({
           id: username,
           email: "", // Email not used in username-based auth
           username,
-          subscription_status: "free",
+          subscription_status: subscription_status,
           free_prompts_remaining: promptCount,
         });
         setIsAuthenticated(true);
 
         // Get updated user info after login
-        await refreshUserInfo();
+        // await refreshUserInfo();
 
         return response;
       } catch (error) {
@@ -291,19 +237,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Store user data and initialize free prompts for new users
       localStorage.setItem("username", username);
-      localStorage.setItem("free_prompts_remaining", "3");
+       const res = await api.getSubscriptionStatus();
+        localStorage.setItem("free_prompts_remaining", res.free_messages_remaining);
 
-      setUser({
-        id: username,
-        email: "", // Email not used in username-based auth
-        username: username,
-        subscription_status: "free",
-        free_prompts_remaining: 3,
-      });
-      setIsAuthenticated(true);
+        // Initialize user with existing prompt count or default to
+        const promptCount = res.free_messages_remaining ? parseInt(res.free_messages_remaining) : 5;
+        const subscription_status = res.subscription.has_subscription ? response.subscription.plan : "free";
+        localStorage.setItem("free_prompts_remaining", promptCount.toString());
+        setUser({
+          id: username,
+          email: "", // Email not used in username-based auth
+          username,
+          subscription_status: subscription_status,
+          free_prompts_remaining: promptCount,
+        });
+        setIsAuthenticated(true);
 
       // Get updated user info after signup (but preserve free prompts)
-      await refreshUserInfo();
 
       return response;
     } catch (error) {
@@ -330,7 +280,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         signup,
         logout,
-        refreshUserInfo,
         canSendMessage,
         decrementFreePrompt,
         getSubscriptionStatus,

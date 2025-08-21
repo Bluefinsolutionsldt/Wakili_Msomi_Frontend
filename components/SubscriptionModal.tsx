@@ -67,7 +67,7 @@ export default function SubscriptionModal({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState("");
-  const { user, refreshUserInfo } = useAuth();
+  const { user } = useAuth();
 
   const handleSubscribe = async (planId: string) => {
     if (!phone) {
@@ -117,8 +117,7 @@ export default function SubscriptionModal({
 
         // Handle successful payment initiation
         setSuccess(true);
-        await refreshUserInfo(); // Refresh user info to get updated subscription status
-
+        
         setTimeout(() => {
           onClose();
           setSuccess(false);

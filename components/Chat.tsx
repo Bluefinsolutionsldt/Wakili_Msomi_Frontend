@@ -57,31 +57,6 @@ interface ChatProps {
   onConversationsChange?: (value: boolean) => void;
 }
 
-const TypingIndicator = () => (
-  <div className="flex items-start space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 max-w-6xl mx-auto">
-    <Avatar className="h-7 w-7 sm:h-8 sm:w-8 ring-2 ring-[#FFD45E]/20 flex-shrink-0">
-      <AvatarImage src="/wakilimsomi.jpeg" alt="Wakili Msomi" />
-      <AvatarFallback className="bg-gradient-to-br from-[#FFD45E] to-[#e6bf55] text-black">
-        <Scale className="h-3 w-3 sm:h-4 sm:w-4" />
-      </AvatarFallback>
-    </Avatar>
-    <div className="flex items-center space-x-2 bg-gray-800/60 backdrop-blur-sm rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 border border-gray-700/30">
-      <div className="flex space-x-1">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#FFD45E] rounded-full animate-pulse"
-            style={{ animationDelay: `${i * 0.15}s` }}
-          />
-        ))}
-      </div>
-      <span className="text-xs text-gray-300 ml-2 font-medium">
-        Wakili Msomi is analyzing...
-      </span>
-    </div>
-  </div>
-);
-
 const MessageBubble = ({
   message,
   index,
@@ -308,6 +283,7 @@ export default function Chat({
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [showStatusBar, setShowStatusBar] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -408,31 +384,123 @@ export default function Chat({
 
       const messageText = newMessage.trim();
       setNewMessage("");
+      setIsStreaming(true);
+      setError(null);
+
+      const userMessage: Message = {
+        role: "user" as const,
+        content: messageText,
+        timestamp: new Date().toISOString(),
+      };
+
+      const assistantMessage: Message = {
+        role: "assistant" as const,
+        content: "",
+        timestamp: new Date().toISOString(),
+      };
+
+      setMessages((prev) => [...prev, userMessage, assistantMessage]);
+      decrementFreePrompt();
 
       try {
-        setIsLoading(true);
-        setError(null);
+        const response = await fetch(
+          `http://84.247.138.245:8007/query`, // Using direct backend URL from api.ts
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "text/event-stream",
+              "Cache-Control": "no-cache",
+              Connection: "keep-alive",
+              Authorization: `Bearer ${api.token}`,
+            },
+            body: JSON.stringify({
+              query: messageText,
+              conversation_id: api.currentConversationId,
+              language: "en",
+              use_offline: false,
+              verbose: false,
+            }),
+          }
+        );
 
-        const userMessage = {
-          role: "user" as const,
-          content: messageText,
-          timestamp: new Date().toISOString(),
-        };
-        setMessages((prev) => [...prev, userMessage]);
-
-        decrementFreePrompt();
-
-        const response = await api.query(messageText);
-
-        if (response) {
-          const assistantMessage = {
-            role: "assistant" as const,
-            content: response.content,
-            timestamp: response.timestamp || new Date().toISOString(),
-          };
-          setMessages((prev) => [...prev, assistantMessage]);
+        // Check for event stream content type
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("text/event-stream")) {
+          throw new Error(
+            "Invalid response from server. Expected event stream but received: " +
+              contentType
+          );
         }
-        if (response?.conversationCreated && onConversationsChange) {
+
+        if (!response.ok) {
+          let errorMessage = "An unknown error occurred";
+          try {
+            const errorData = await response.json();
+            errorMessage =
+              errorData.detail || errorData.message || errorMessage;
+          } catch (e) {
+            console.error("Failed to parse error response:", e);
+          }
+          throw new Error(errorMessage);
+        }
+
+        if (!response.body) {
+          throw new Error("Response body is null");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let conversationCreated = false;
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          console.log("Received chunk:", chunk); // Debug log
+
+          // Split by newlines and handle each line
+          const lines = chunk.split("\n");
+          for (const line of lines) {
+            if (line.trim().startsWith("data: ")) {
+              try {
+                // Extract the JSON part after 'data: '
+                const jsonString = line.trim().substring(6);
+                console.log("Parsing JSON:", jsonString); // Debug log
+                const data = JSON.parse(jsonString);
+
+                if (data.content || data.response_chunk) {
+                  // Handle both content and response_chunk fields
+                  const messageContent = data.content || data.response_chunk;
+                  console.log("Message content:", messageContent); // Debug log
+
+                  setMessages((prev) =>
+                    prev.map((msg, index) =>
+                      index === prev.length - 1
+                        ? { ...msg, content: msg.content + messageContent }
+                        : msg
+                    )
+                  );
+                }
+
+                if (data.status === "complete") {
+                  if (data.conversation_id) {
+                    api.setCurrentConversationId(data.conversation_id);
+                    conversationCreated = true;
+                  }
+                }
+
+                if (data.error) {
+                  throw new Error(data.detail || data.error);
+                }
+              } catch (e) {
+                console.error("Failed to parse stream data:", e);
+              }
+            }
+          }
+        }
+        if (conversationCreated && onConversationsChange) {
           onConversationsChange(true);
         }
       } catch (error: any) {
@@ -443,10 +511,11 @@ export default function Chat({
         }
 
         setError(error?.message || "Failed to send message. Please try again.");
-        setMessages((prev) => prev.slice(0, -1));
+        // Remove the optimistic user and assistant messages on error
+        setMessages((prev) => prev.slice(0, -2));
         setNewMessage(messageText);
       } finally {
-        setIsLoading(false);
+        setIsStreaming(false);
       }
     },
     [
@@ -521,7 +590,7 @@ export default function Chat({
               />
             ))}
 
-            {isLoading && <TypingIndicator />}
+            {/* streaming active - no typing indicator */}
 
             {noPromptsMessage}
 
@@ -558,7 +627,7 @@ export default function Chat({
             handleSubmit={handleSubmit}
             canSend={canSend}
             isAuthenticated={isAuthenticated}
-            isLoading={isLoading}
+            isLoading={isLoading || isStreaming}
             inputRef={inputRef}
           />
 
