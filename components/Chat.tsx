@@ -205,7 +205,7 @@ const ChatInput = React.memo(
     canSend: boolean;
     isAuthenticated: boolean;
     isLoading: boolean;
-    inputRef: React.RefObject<HTMLInputElement | null>;
+    inputRef: React.RefObject<HTMLInputElement>;
   }) => {
     const placeholder = canSend
       ? "Ask about legal matters, contracts, regulations..."
