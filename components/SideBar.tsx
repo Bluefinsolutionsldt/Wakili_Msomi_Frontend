@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import api from "@/services/api";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { handleAuthError } from "@/utils/auth-error-handler";
 import {
   Plus,
@@ -504,7 +505,7 @@ export default function SideBar({
             </div>
 
             {/* Conversations List */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2">
+            <ScrollArea className="flex-1 px-2 py-2 sidebar-scroll">
               <div className="space-y-1">
                 {filteredConversations.length === 0 ? (
                   <AnimatePresence>
@@ -580,7 +581,7 @@ export default function SideBar({
                   ))
                 )}
               </div>
-            </div>
+            </ScrollArea>
           </div>
         </div>
       </motion.div>

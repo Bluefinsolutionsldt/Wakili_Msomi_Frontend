@@ -191,7 +191,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Initialize user with existing prompt count or default to
         const promptCount = res.free_messages_remaining ? parseInt(res.free_messages_remaining) : 5;
-        const subscription_status = res.subscription.has_subscription ? response.subscription.plan : "free";
+        const subscription_status = (res.subscription && res.subscription.has_subscription) ? res.subscription.plan : "free";
         setUser({
           id: username,
           email: "", // Email not used in username-based auth
@@ -242,7 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Initialize user with existing prompt count or default to
         const promptCount = res.free_messages_remaining ? parseInt(res.free_messages_remaining) : 5;
-        const subscription_status = res.subscription.has_subscription ? response.subscription.plan : "free";
+        const subscription_status = (res.subscription && res.subscription.has_subscription) ? res.subscription.plan : "free";
         localStorage.setItem("free_prompts_remaining", promptCount.toString());
         setUser({
           id: username,

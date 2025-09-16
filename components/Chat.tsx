@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { handleAuthError } from "@/utils/auth-error-handler";
 import SubscriptionModal from "@/components/SubscriptionModal";
+import TypingIndicator from "@/components/TypingIndicator";
 import {
   Send,
   User,
@@ -284,6 +285,7 @@ export default function Chat({
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
   const [showStatusBar, setShowStatusBar] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -385,6 +387,7 @@ export default function Chat({
       const messageText = newMessage.trim();
       setNewMessage("");
       setIsStreaming(true);
+      setIsWaitingForResponse(true);
       setError(null);
 
       const userMessage: Message = {
@@ -393,13 +396,8 @@ export default function Chat({
         timestamp: new Date().toISOString(),
       };
 
-      const assistantMessage: Message = {
-        role: "assistant" as const,
-        content: "",
-        timestamp: new Date().toISOString(),
-      };
-
-      setMessages((prev) => [...prev, userMessage, assistantMessage]);
+      // Only add the user message initially, assistant message will be added when first content arrives
+      setMessages((prev) => [...prev, userMessage]);
       decrementFreePrompt();
 
       try {
@@ -475,13 +473,29 @@ export default function Chat({
                   const messageContent = data.content || data.response_chunk;
                   console.log("Message content:", messageContent); // Debug log
 
-                  setMessages((prev) =>
-                    prev.map((msg, index) =>
-                      index === prev.length - 1
-                        ? { ...msg, content: msg.content + messageContent }
-                        : msg
-                    )
-                  );
+                  // Clear waiting state on first content
+                  setIsWaitingForResponse(false);
+
+                  setMessages((prev) => {
+                    // Check if we need to add the assistant message (first content)
+                    const lastMessage = prev[prev.length - 1];
+                    if (!lastMessage || lastMessage.role !== "assistant") {
+                      // Add new assistant message with first content
+                      const assistantMessage: Message = {
+                        role: "assistant" as const,
+                        content: messageContent,
+                        timestamp: new Date().toISOString(),
+                      };
+                      return [...prev, assistantMessage];
+                    } else {
+                      // Append to existing assistant message
+                      return prev.map((msg, index) =>
+                        index === prev.length - 1
+                          ? { ...msg, content: msg.content + messageContent }
+                          : msg
+                      );
+                    }
+                  });
                 }
 
                 if (data.status === "complete") {
@@ -511,11 +525,20 @@ export default function Chat({
         }
 
         setError(error?.message || "Failed to send message. Please try again.");
-        // Remove the optimistic user and assistant messages on error
-        setMessages((prev) => prev.slice(0, -2));
+        // Remove the optimistic messages on error
+        setMessages((prev) => {
+          // If we added an assistant message, remove both user and assistant
+          const lastMessage = prev[prev.length - 1];
+          if (lastMessage && lastMessage.role === "assistant") {
+            return prev.slice(0, -2); // Remove both user and assistant
+          } else {
+            return prev.slice(0, -1); // Remove just the user message
+          }
+        });
         setNewMessage(messageText);
       } finally {
         setIsStreaming(false);
+        setIsWaitingForResponse(false);
       }
     },
     [
@@ -589,6 +612,9 @@ export default function Chat({
                 index={index}
               />
             ))}
+
+            {/* Show typing indicator when waiting for response */}
+            {isWaitingForResponse && <TypingIndicator />}
 
             {/* streaming active - no typing indicator */}
 

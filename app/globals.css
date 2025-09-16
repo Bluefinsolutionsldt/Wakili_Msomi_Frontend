@@ -72,3 +72,17 @@
     overscroll-behavior-y: none;
   } */
 }
+
+/* Custom scrollbar styles for sidebar */
+.sidebar-scroll [data-radix-scroll-area-scrollbar] {
+  background: transparent;
+}
+
+.sidebar-scroll [data-radix-scroll-area-thumb] {
+  background: rgba(107, 114, 128, 0.3) !important; /* gray-500/30 */
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-scroll [data-radix-scroll-area-scrollbar]:hover [data-radix-scroll-area-thumb] {
+  background: rgba(107, 114, 128, 0.5) !important; /* gray-500/50 */
+}
