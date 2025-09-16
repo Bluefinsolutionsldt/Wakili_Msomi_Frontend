@@ -31,7 +31,7 @@
   * {
     @apply border-border;
   }
-  
+
   html {
     overflow: hidden;
     height: 100%;
@@ -39,7 +39,7 @@
     height: 100vh;
     height: 100dvh; /* Use dynamic viewport height on supported browsers */
   }
-  
+
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-inter);
@@ -51,7 +51,7 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: none;
   }
-  
+
   /* Prevent iOS Safari bounce effect and address bar issues */
   @supports (-webkit-touch-callout: none) {
     body {
@@ -66,7 +66,7 @@
     position: fixed;
     overflow: hidden;
   }
-  
+
   /* Prevent pull-to-refresh */
   /* html {
     overscroll-behavior-y: none;
@@ -83,6 +83,8 @@
   transition: background-color 0.2s ease;
 }
 
-.sidebar-scroll [data-radix-scroll-area-scrollbar]:hover [data-radix-scroll-area-thumb] {
+.sidebar-scroll
+  [data-radix-scroll-area-scrollbar]:hover
+  [data-radix-scroll-area-thumb] {
   background: rgba(107, 114, 128, 0.5) !important; /* gray-500/50 */
 }

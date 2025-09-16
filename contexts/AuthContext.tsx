@@ -66,7 +66,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, isAuthenticated, hasFetchedSubscription]);
 
-
   const canSendMessage = (): boolean => {
     if (!user) {
       return false;
@@ -187,11 +186,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Store user data
         localStorage.setItem("username", username);
         const res = await api.getSubscriptionStatus();
-        localStorage.setItem("free_prompts_remaining", res.free_messages_remaining);
+        localStorage.setItem(
+          "free_prompts_remaining",
+          res.free_messages_remaining
+        );
 
         // Initialize user with existing prompt count or default to
-        const promptCount = res.free_messages_remaining ? parseInt(res.free_messages_remaining) : 5;
-        const subscription_status = (res.subscription && res.subscription.has_subscription) ? res.subscription.plan : "free";
+        const promptCount = res.free_messages_remaining
+          ? parseInt(res.free_messages_remaining)
+          : 5;
+        const subscription_status =
+          res.subscription && res.subscription.has_subscription
+            ? res.subscription.plan
+            : "free";
         setUser({
           id: username,
           email: "", // Email not used in username-based auth
@@ -237,21 +244,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Store user data and initialize free prompts for new users
       localStorage.setItem("username", username);
-       const res = await api.getSubscriptionStatus();
-        localStorage.setItem("free_prompts_remaining", res.free_messages_remaining);
+      const res = await api.getSubscriptionStatus();
+      localStorage.setItem(
+        "free_prompts_remaining",
+        res.free_messages_remaining
+      );
 
-        // Initialize user with existing prompt count or default to
-        const promptCount = res.free_messages_remaining ? parseInt(res.free_messages_remaining) : 5;
-        const subscription_status = (res.subscription && res.subscription.has_subscription) ? res.subscription.plan : "free";
-        localStorage.setItem("free_prompts_remaining", promptCount.toString());
-        setUser({
-          id: username,
-          email: "", // Email not used in username-based auth
-          username,
-          subscription_status: subscription_status,
-          free_prompts_remaining: promptCount,
-        });
-        setIsAuthenticated(true);
+      // Initialize user with existing prompt count or default to
+      const promptCount = res.free_messages_remaining
+        ? parseInt(res.free_messages_remaining)
+        : 5;
+      const subscription_status =
+        res.subscription && res.subscription.has_subscription
+          ? res.subscription.plan
+          : "free";
+      localStorage.setItem("free_prompts_remaining", promptCount.toString());
+      setUser({
+        id: username,
+        email: "", // Email not used in username-based auth
+        username,
+        subscription_status: subscription_status,
+        free_prompts_remaining: promptCount,
+      });
+      setIsAuthenticated(true);
 
       // Get updated user info after signup (but preserve free prompts)
 
