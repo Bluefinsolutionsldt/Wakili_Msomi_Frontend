@@ -117,7 +117,7 @@ export default function SubscriptionModal({
 
         // Handle successful payment initiation
         setSuccess(true);
-        
+
         setTimeout(() => {
           onClose();
           setSuccess(false);
@@ -141,6 +141,19 @@ export default function SubscriptionModal({
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, ""); // Remove non-digits
+
+    // Convert 07 to 255 format
+    if (value.startsWith("07") && value.length >= 2) {
+      value = "255" + value.substring(2);
+    }
+    // If user enters 0 followed by 7, automatically convert to 255
+    else if (value.startsWith("0") && value.length >= 2 && value[1] === "7") {
+      value = "255" + value.substring(2);
+    }
+    // Ensure it starts with 255 if user tries to enter 7 directly
+    else if (value.startsWith("7") && !value.startsWith("255")) {
+      value = "255" + value;
+    }
 
     // Format as 255 XXX XXX XXX
     if (value.length > 3) {
@@ -255,12 +268,12 @@ export default function SubscriptionModal({
           <div className="border-t border-gray-800 pt-3 space-y-3">
             <div>
               <Label htmlFor="phone" className="text-gray-300 text-sm">
-                M-Pesa Number
+                M-Pesa Number (Enter 07... or 255...)
               </Label>
               <Input
                 id="phone"
                 type="tel"
-                placeholder="255XXXXXXXXX"
+                placeholder="07XXXXXXXX or 255XXXXXXXXX"
                 value={phone}
                 onChange={handlePhoneChange}
                 className="mt-1 bg-gray-800 border-gray-700 text-white text-sm"

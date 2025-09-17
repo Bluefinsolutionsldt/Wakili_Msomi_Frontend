@@ -205,7 +205,7 @@ const ChatInput = React.memo(
     canSend: boolean;
     isAuthenticated: boolean;
     isLoading: boolean;
-    inputRef: React.RefObject<HTMLInputElement>;
+    inputRef: React.RefObject<HTMLInputElement | null>;
   }) => {
     const placeholder = canSend
       ? "Ask about legal matters, contracts, regulations..."
@@ -659,7 +659,7 @@ export default function Chat({
 
           <p className="text-xs text-gray-500 mt-3 sm:mt-4 text-center px-2">
             For more assistant you can call{" "}
-            <span className="text-yellow-300">+255 621 900 555</span>
+            <span className="text-yellow-300">255621900555</span>
           </p>
         </div>
       </div>
